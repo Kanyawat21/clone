@@ -130,13 +130,14 @@ type UserData struct {
 
 var db *sql.DB
 
-func checkUserQuery(username, pass string) *UserData {
+func checkUserQuery_Fix(username, pass string) (*UserData, error) {
 	/* this function will check rows num which return from query */
 	db, err := database.Connect()
 	if err != nil {
 		log.Println(err.Error())
+		return nil, err
 	}
-
+	defer db.Close()
 	var uData = UserData{} //inisialize empty userdata
 
 	const (
@@ -149,10 +150,16 @@ func checkUserQuery(username, pass string) *UserData {
 	stmt, err := db.Prepare(sql)
 	if err != nil {
 		log.Println(err.Error())
+		return nil, err
 	}
 	defer stmt.Close()
+	
 	err = stmt.QueryRow(username, pass).Scan(&uData.id, &uData.uname, &uData.cnt)
-	return &uData
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+	return &uData, nil
 
 }
 
